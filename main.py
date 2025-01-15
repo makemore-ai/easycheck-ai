@@ -234,4 +234,4 @@ def chat():
 
 if __name__ == '__main__':
     print(ARK_API_KEY, DOUBAO_SK, DOUBAO_AK)
-    app.run(debug=True)
+    app.run(host="127.0.0.1", port=6378, debug=True)
