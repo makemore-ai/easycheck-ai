@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EasyCheck-AI照片</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .upload-container {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .upload-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px dashed #666;
+            margin: 0 auto;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            overflow: hidden;
+        }
+
+        .upload-circle:hover {
+            border-color: #1a73e8;
+            background-color: #f8f9fa;
+        }
+
+        .upload-circle::before {
+            content: '+';
+            font-size: 50px;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .upload-circle:hover::before {
+            color: #1a73e8;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .analyze-btn {
+            margin-top: 15px;
+            padding: 12px 24px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .analyze-btn:hover {
+            background-color: #1557b0;
+        }
+
+        #preview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            border-radius: 50%;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-timer {
+            color: #666;
+        }
+
+        #timerCount {
+            color: #666;
+        }
+
+        .upload-circles-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 15px;
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .upload-hint {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .image-input {
+            display: none;
+        }
+
+        .preview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            border-radius: 50%;
+        }
+
+        .analysis-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .story-section {
+            width: 100%;
+            background-color: #f8f9fa;
+            border-left: 4px solid #1a73e8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .analysis-section {
+            margin-bottom: 0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            color: #1a73e8;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .appearance-section {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+
+        .review-section {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+
+        .personality-section {
+            background-color: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        /* 统一按钮基础样式 */
+        .analyze-btn, .cartoon-btn {
+            padding: 12px 24px;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            min-width: 120px; /* 确保最小宽度一致 */
+        }
+
+        .analyze-btn {
+            background-color: #1a73e8;
+        }
+
+        .analyze-btn:hover {
+            background-color: #1557b0;
+        }
+
+        .cartoon-btn {
+            background-color: #34a853;
+            display: none; /* 默认隐藏 */
+        }
+
+        .cartoon-btn:hover {
+            background-color: #2d8a46;
+        }
+
+        .cartoon-result {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .cartoon-image {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-loading {
+            text-align: center;
+            margin-top: 10px;
+            color: #65676b;
+        }
+
+        .chat-loading:after {
+            content: '.';
+            animation: dots 1s steps(5, end) infinite;
+        }
+
+        .cartoon-link {
+            display: none; /* 默认隐藏 */
+            color: #1a73e8;
+            text-decoration: none;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .cartoon-link:hover {
+            color: #1557b0;
+            text-decoration: underline;
+        }
+
+        .continue-story {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            width: 100%;
+        }
+
+        .continue-story a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .continue-story a:hover {
+            color: #1557b0;
+            text-decoration: underline;
+        }
+
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .dialog-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            z-index: 1001;
+        }
+
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dialog-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+
+        .dialog-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            cursor: pointer;
+            color: #666;
+            font-size: 20px;
+        }
+
+        .image-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .image-dialog-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 80%;
+            width: auto;
+            text-align: center;
+            z-index: 1001;
+        }
+
+        .generated-image {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #34a853;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .download-btn:hover {
+            background-color: #2d8a46;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .dialog-body {
+            padding: 10px;
+            background-color: #f9f9f9; /* 背景颜色 */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-container {
+            height: 400px; /* 限制最大高度 */
+            display: flex;
+            overflow-y: auto; /* 允许垂直滚动 */
+            flex-direction: column;
+            gap: 10px; /* 消息之间的间距 */
+        }
+
+        .chat-message {
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 80%; /* 消息最大宽度 */
+            word-wrap: break-word; /* 自动换行 */
+        }
+
+        .user-message {
+            align-self: flex-end; /* 用户消息右对齐 */
+            background-color: #d1e7dd; /* 用户消息背景色 */
+        }
+
+        .bot-message {
+            align-self: flex-start; /* 机器人消息左对齐 */
+            background-color: #f8d7da; /* 机器人消息背景色 */
+        }
+
+        .chat-input-container {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .send-button {
+            padding: 10px 15px;
+            margin-left: 10px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .send-button:hover {
+            background-color: #1557b0;
+        }
+    </style>
+</head>
+<body>
+<h1 class="title">EasyCheck</h1>
+<div class="subtitle">让AI瞧瞧你的照片吧</div>
+<div class="upload-container">
+    <div class="upload-circles-container">
+        <label for="imageInput1" class="upload-circle">
+            <img id="preview1" class="preview">
+        </label>
+    </div>
+    <input type="file" id="imageInput1" class="image-input" accept="image/*">
+
+    <div class="action-buttons">
+        <button class="analyze-btn" onclick="analyzeImages()">开始分析</button>
+    </div>
+    <a class="cartoon-link" onclick="generateCartoon()" display="none">生成专属新年头像</a>
+</div>
+<div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-timer">分析中...<br/><span id="timerCount">0</span> 秒</div>
+</div>
+<div id="result"></div>
+
+<script>
+    let currentImageCount = 1;
+    const MAX_IMAGES = 3;
+    var conversationHistory = [];
+    // 更新事件监听器，为每个输入添加处理程序
+    document.querySelectorAll('.image-input').forEach((input, index) => {
+        input.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const previewId = `preview${index + 1}`;
+                const preview = document.getElementById(previewId);
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+
+    // 添加计时器相关函数
+    let timerInterval;
+
+    function startTimer(elementId) {
+        let seconds = 0;
+        const timerElement = document.getElementById(elementId);
+        if (!timerElement) return; // 如果元素不存在则直接返回
+
+        timerInterval = setInterval(() => {
+            seconds++;
+            timerElement.textContent = seconds;
+        }, 1000);
+    }
+
+    function stopTimer(elementId) {
+        clearInterval(timerInterval);
+        const timerElement = document.getElementById(elementId);
+        if (timerElement) {
+            timerElement.textContent = '0';
+        }
+    }
+
+    function analyzeImages() {
+        const files = Array.from(document.querySelectorAll('.image-input'))
+            .map(input => input.files[0])
+            .filter(file => file);
+
+        if (files.length === 0) {
+            alert('请至少选择一张图片！');
+            return;
+        }
+
+        loading.style.display = 'block';
+        startTimer('timerCount'); // 使用分析图片的计时器ID
+        result.style.display = 'none';
+        document.querySelector('.cartoon-link').style.display = 'none';
+
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('images', file);
+        });
+
+        fetch('/analyze', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                stopTimer('timerCount');
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                if (data.error) {
+                    result.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                } else {
+                    const resultHtml = data.results.map(result => {
+                        const sections = result.analysis.sections;
+                        const imageUrl = document.getElementById('preview1').src; // 获取上传的图片URL
+                        return `
+                            <div class="analysis-container">
+                                <div class="analysis-section story-section">
+                                    <p id="section-story">${sections.story || '暂无内容'}</p>
+                                    <div class="continue-story">
+                                        <a onclick="showStoryDialog('${imageUrl}')">继续我们的故事？</a>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-grid">
+                                    <div class="analysis-section appearance-section">
+                                        <div class="section-title">🎭 颜值分析</div>
+                                        <p>${sections.appearance || '暂无内容'}</p>
+                                    </div>
+                                    
+                                    <div class="analysis-section review-section">
+                                        <div class="section-title">📸 照片评价</div>
+                                        <p>${sections.review || '暂无内容'}</p>
+                                    </div>
+                                    
+                                    <div class="analysis-section personality-section">
+                                        <div class="section-title">🔮 性格解读</div>
+                                        <p>${sections.personality || '暂无内容'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    result.innerHTML = resultHtml;
+                    document.querySelector('.cartoon-link').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                stopTimer('timerCount');
+                loading.style.display = 'none';
+                console.error('Error:', error);
+                alert('分析失败，请重试！');
+            });
+    }
+
+    function showStoryDialog(imageUrl) {
+        const dialog = document.createElement('div');
+        let story = document.getElementById('section-story').innerText
+        dialog.className = 'dialog-overlay';
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <span class="dialog-close" onclick="closeDialog(this)">×</span>
+                <div class="dialog-header">
+                    <img src="${imageUrl}" class="dialog-avatar" alt="用户头像">
+                    <h3>来吧！故事继续</h3>
+                </div>
+                <div class="dialog-body">
+                    <div class="chat-container">
+                        <div class="chat-message bot-message">${story}</div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="userInput" class="chat-input" placeholder="输入你的消息..." />
+                        <button class="send-button" onclick="sendMessage()">发送</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        conversationHistory.push({role: "system", content: story})
+        document.body.style.overflow = 'hidden';
+        document.body.appendChild(dialog);
+        dialog.style.display = 'block';
+        // 监听回车键
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        doChat()
+    }
+
+    function closeDialog(element) {
+        const dialog = element.closest('.dialog-overlay');
+        dialog.style.display = 'none';
+        dialog.remove();
+        document.body.style.overflow = 'auto';
+    }
+
+    function generateCartoon() {
+        const imageInput = document.getElementById('imageInput1');
+        const file = imageInput.files[0];
+
+        if (!file) {
+            alert('请先选择一张图片！');
+            return;
+        }
+
+        document.body.style.overflow = 'hidden';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'image-dialog';
+        dialog.innerHTML = `
+                <div class="image-dialog-content">
+                    <span class="dialog-close" onclick="closeImageDialog(this)">×</span>
+                    <div id="generationLoading">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-timer">正在生成中，请稍候...<br/>已用时：<span id="cartoonTimerCount">0</span> 秒</div>
+                    </div>
+                    <div id="generationResult" style="display: none;">
+                        <img id="cartoonImage" class="generated-image">
+                        <br>
+                        <button class="download-btn" onclick="downloadImage()">下载图片</button>
+                    </div>
+                </div>
+            `;
+
+        document.body.appendChild(dialog);
+        dialog.style.display = 'block';
+        startTimer('cartoonTimerCount'); // 使用生成卡通图的计时器ID
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        fetch('/generate_image', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                stopTimer('cartoonTimerCount');
+                if (data.error) {
+                    alert(data.error);
+                    closeImageDialog(dialog.querySelector('.dialog-close'));
+                } else {
+                    document.getElementById('generationLoading').style.display = 'none';
+                    document.getElementById('generationResult').style.display = 'block';
+                    document.getElementById('cartoonImage').src = data.cartoon_image;
+                }
+            })
+            .catch(error => {
+                stopTimer('cartoonTimerCount');
+                console.error('Error:', error);
+                alert('生成失败，请重试！');
+                closeImageDialog(dialog.querySelector('.dialog-close'));
+            });
+    }
+
+    function closeImageDialog(element) {
+        const dialog = element.closest('.image-dialog');
+        dialog.style.display = 'none';
+        dialog.remove();
+
+        document.body.style.overflow = 'auto';
+    }
+
+    function downloadImage() {
+        const image = document.getElementById('cartoonImage');
+        const link = document.createElement('a');
+        link.href = image.src;
+        link.download = 'cartoon_image.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function sendMessage() {
+        const userInput = document.getElementById('userInput');
+        const message = userInput.value.trim();
+
+        if (message) {
+            // 创建用户消息元素
+            const userMessageElement = document.createElement('div');
+            userMessageElement.className = 'chat-message user-message';
+            userMessageElement.textContent = message;
+            // 将用户消息添加到聊天容器
+            const chatContainer = document.querySelector('.chat-container');
+            chatContainer.appendChild(userMessageElement);
+            scrollChat()
+            conversationHistory.push({role: "user", content: message});
+            doChat()
+            // 清空输入框
+            userInput.value = '';
+        }
+    }
+
+    function doChat() {
+        const chatContainer = document.querySelector('.chat-container');
+        const files = Array.from(document.querySelectorAll('.image-input'))
+            .map(input => input.files[0])
+            .filter(file => file);
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('images', file);
+        });
+        formData.append('history', JSON.stringify(conversationHistory))
+        addLoading()
+        // 发送用户消息到后端
+        fetch('/chat', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                removeLoading()
+                // 创建机器人的回复消息元素
+                const botMessageElement = document.createElement('div');
+                botMessageElement.className = 'chat-message bot-message';
+                botMessageElement.textContent = data.reply; // 假设后端返回的字段为 reply
+
+                // 将机器人的回复添加到聊天容器
+                chatContainer.appendChild(botMessageElement);
+                scrollChat()
+                conversationHistory.push({role: "system", content: data.reply});
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // 处理错误情况
+            });
+    }
+
+    function scrollChat() {
+        const chatContainer = document.querySelector('.chat-container');
+        chatContainer.scrollTop = chatContainer.scrollHeight; // 滚动到最新消息
+    }
+
+    function addLoading() {
+        const chatContainer = document.querySelector('.chat-container');
+        const dialog = document.createElement('div');
+        dialog.className = 'chat-loading';
+        dialog.innerHTML = '正在输入中...'
+        chatContainer.appendChild(dialog)
+        scrollChat()
+    }
+
+    function removeLoading() {
+        const loading = document.querySelector('.chat-loading');
+        loading.remove()
+    }
+
+
+</script>
+</body>
+</html>
