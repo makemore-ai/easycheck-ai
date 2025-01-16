@@ -13,7 +13,7 @@ load_dotenv()
 print(os.environ)
 ARK_API_KEY = os.getenv('ARK_API_KEY')
 DOUBAO_AK = os.getenv('DOUBAO_AK')
-DOUBAO_SK = os.getenv('DOUBAO_SK')
+DOUBAO_SK = "T0dFNE5qRmtabU5qWVdWaE5HVTJOMkl3Tm1VM05USmxOelprTkRWbE1Uaw=="
 
 app = Flask(__name__)
 
@@ -143,14 +143,11 @@ def analyze():
         for image in files:
             # 检查文件类型
             if not image.filename or not image.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                print(image.filename)
                 return jsonify({'error': f'文件 {image.filename} 格式不支持，只支持PNG、JPG、JPEG格式的图片'}), 400
 
             # 读取文件内容
             image_data = image.read()
-
-            # 检查文件大小
-            if len(image_data) > 5 * 1024 * 1024:  # 5MB
-                return jsonify({'error': f'文件 {image.filename} 超过5MB限制'}), 400
 
             # 转换为base64
             image_base64 = base64.b64encode(image_data).decode('utf-8')

@@ -2,6 +2,14 @@
 <html>
 <head>
     <title>EasyCheck-AI照片</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-55D7E0XKGN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-55D7E0XKGN');
+</script>
     <meta charset="UTF-8">
     <style>
         body {
@@ -548,31 +556,70 @@
             timerElement.textContent = '0';
         }
     }
+    function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 800; // 最大宽度
+                    const scale = Math.min(MAX_WIDTH / img.width, 1);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/jpeg', 0.7); // 70%质量
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
     function analyzeImages() {
+        gtag('event', 'analyzeImages')
         const files = Array.from(document.querySelectorAll('.image-input'))
             .map(input => input.files[0])
             .filter(file => file);
 
-        if (files.length === 0) {
-            alert('请至少选择一张图片！');
-            return;
-        }
+        // 新增的压缩逻辑
+        const compressedFiles = [];
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-        loading.style.display = 'block';
-        startTimer('timerCount'); // 使用分析图片的计时器ID
-        result.style.display = 'none';
-        document.querySelector('.cartoon-link').style.display = 'none';
+        const compressFiles = async () => {
+            for (const file of files) {
+                if (file.size > MAX_SIZE) {
+                    const compressedFile = await compressImage(file);
+                    compressedFiles.push({ blob: compressedFile, name: file.name }); // 保留原始文件名
+                } else {
+                    compressedFiles.push({ blob: file, name: file.name }); // 保留原始文件名
+                }
+            }
+        };
 
-        const formData = new FormData();
-        files.forEach(file => {
-            formData.append('images', file);
-        });
+        compressFiles().then(() => {
+            if (compressedFiles.length === 0) {
+                alert('请至少选择一张图片！');
+                return;
+            }
 
-        fetch('/analyze', {
-            method: 'POST',
-            body: formData
-        })
+            loading.style.display = 'block';
+            startTimer('timerCount'); // 使用分析图片的计时器ID
+            result.style.display = 'none';
+            document.querySelector('.cartoon-link').style.display = 'none';
+
+            const formData = new FormData();
+            compressedFiles.forEach(({ blob, name }) => {
+                formData.append('images', blob, name); // 使用原始文件名
+            });
+
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            })
             .then(response => response.json())
             .then(data => {
                 stopTimer('timerCount');
@@ -592,18 +639,18 @@
                                         <a onclick="showStoryDialog('${imageUrl}')">继续我们的故事？</a>
                                     </div>
                                 </div>
-                                
+
                                 <div class="analysis-grid">
                                     <div class="analysis-section appearance-section">
                                         <div class="section-title">🎭 颜值分析</div>
                                         <p>${sections.appearance || '暂无内容'}</p>
                                     </div>
-                                    
+
                                     <div class="analysis-section review-section">
                                         <div class="section-title">📸 照片评价</div>
                                         <p>${sections.review || '暂无内容'}</p>
                                     </div>
-                                    
+
                                     <div class="analysis-section personality-section">
                                         <div class="section-title">🔮 性格解读</div>
                                         <p>${sections.personality || '暂无内容'}</p>
@@ -623,9 +670,11 @@
                 console.error('Error:', error);
                 alert('分析失败，请重试！');
             });
+        });
     }
 
     function showStoryDialog(imageUrl) {
+        gtag('event', 'showStoryDialog')
         const dialog = document.createElement('div');
         let story = document.getElementById('section-story').innerText
         dialog.className = 'dialog-overlay';
@@ -668,6 +717,7 @@
     }
 
     function generateCartoon() {
+        gtag('event', 'generateCartoon')
         const imageInput = document.getElementById('imageInput1');
         const file = imageInput.files[0];
 
@@ -699,31 +749,47 @@
         dialog.style.display = 'block';
         startTimer('cartoonTimerCount'); // 使用生成卡通图的计时器ID
 
-        const formData = new FormData();
-        formData.append('image', file);
+        const compressedFiles = [];
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        const compressFiles = async () => {
+            if (file.size > MAX_SIZE) {
+                const compressedFile = await compressImage(file);
+                compressedFiles.push({ blob: compressedFile, name: file.name }); // 保留原始文件名
+            } else {
+                compressedFiles.push({ blob: file, name: file.name }); // 保留原始文件名
+            }
 
-        fetch('/generate_image', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                stopTimer('cartoonTimerCount');
-                if (data.error) {
-                    alert(data.error);
-                    closeImageDialog(dialog.querySelector('.dialog-close'));
-                } else {
-                    document.getElementById('generationLoading').style.display = 'none';
-                    document.getElementById('generationResult').style.display = 'block';
-                    document.getElementById('cartoonImage').src = data.cartoon_image;
-                }
-            })
-            .catch(error => {
-                stopTimer('cartoonTimerCount');
-                console.error('Error:', error);
-                alert('生成失败，请重试！');
-                closeImageDialog(dialog.querySelector('.dialog-close'));
+        };
+        // 压缩图片
+        compressFiles().then(compressedFile => {
+            const formData = new FormData();
+             compressedFiles.forEach(({ blob, name }) => {
+                formData.append('image', blob, name); // 使用原始文件名
             });
+
+            fetch('/generate_image', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    stopTimer('cartoonTimerCount');
+                    if (data.error) {
+                        alert(data.error);
+                        closeImageDialog(dialog.querySelector('.dialog-close'));
+                    } else {
+                        document.getElementById('generationLoading').style.display = 'none';
+                        document.getElementById('generationResult').style.display = 'block';
+                        document.getElementById('cartoonImage').src = data.cartoon_image;
+                    }
+                })
+                .catch(error => {
+                    stopTimer('cartoonTimerCount');
+                    console.error('Error:', error);
+                    alert('生成失败，请重试！');
+                    closeImageDialog(dialog.querySelector('.dialog-close'));
+                });
+        });
     }
 
     function closeImageDialog(element) {
@@ -735,6 +801,7 @@
     }
 
     function downloadImage() {
+        gtag('event', 'downloadImage')
         const image = document.getElementById('cartoonImage');
         const link = document.createElement('a');
         link.href = image.src;
@@ -745,6 +812,7 @@
     }
 
     function sendMessage() {
+        gtag('event', 'sendMessage')
         const userInput = document.getElementById('userInput');
         const message = userInput.value.trim();
 
