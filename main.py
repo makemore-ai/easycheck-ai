@@ -13,7 +13,7 @@ load_dotenv()
 print(os.environ)
 ARK_API_KEY = os.getenv('ARK_API_KEY')
 DOUBAO_AK = os.getenv('DOUBAO_AK')
-DOUBAO_SK = "T0dFNE5qRmtabU5qWVdWaE5HVTJOMkl3Tm1VM05USmxOelprTkRWbE1Uaw=="
+DOUBAO_SK = os.getenv('DOUBAO_SK')
 
 app = Flask(__name__)
 
