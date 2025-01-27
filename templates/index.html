@@ -616,7 +616,7 @@
                 formData.append('images', blob, name); // 使用原始文件名
             });
 
-            fetch('/analyze', {
+            fetch('/easycheck/analyze', {
                 method: 'POST',
                 body: formData
             })
