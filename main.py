@@ -41,8 +41,14 @@ class SarcasticAI:
                                                      "key分别为story,appearance,review,personality\n"
                                                      "从输入的几张图片开始一步一步思考吧！"}]
             for image_base64 in image_base64_list:
+                # 根据图片格式设置image/后的具体参数
+                image_format = 'png'  # 默认格式
+                if image_base64.startswith('data:image/jpeg'):
+                    image_format = 'jpeg'
+                elif image_base64.startswith('data:image/jpg'):
+                    image_format = 'jpg'
                 content_list.append(
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}})
+                    {"type": "image_url", "image_url": {"url": f"data:image/{image_format};base64,{image_base64}"}})
             # 调用豆包的图像理解模型
             completion = self.client.chat.completions.create(
                 model='ep-20250109143920-v49hz',
