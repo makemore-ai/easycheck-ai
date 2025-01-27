@@ -616,7 +616,7 @@
                 formData.append('images', blob, name); // 使用原始文件名
             });
 
-            fetch('/analyze', {
+            fetch('/easycheck/analyze', {
                 method: 'POST',
                 body: formData
             })
@@ -767,7 +767,7 @@
                 formData.append('image', blob, name); // 使用原始文件名
             });
 
-            fetch('/generate_image', {
+            fetch('/easycheck/generate_image', {
                 method: 'POST',
                 body: formData
             })
@@ -844,7 +844,7 @@
         formData.append('history', JSON.stringify(conversationHistory))
         addLoading()
         // 发送用户消息到后端
-        fetch('/chat', {
+        fetch('/easycheck/chat', {
             method: 'POST',
             body: formData
         })
